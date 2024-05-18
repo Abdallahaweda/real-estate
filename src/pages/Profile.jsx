@@ -19,7 +19,7 @@ import {
   updateUserSuccess,
 } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
-import  {Link} from 'react-router-dom'
+import { Link } from "react-router-dom";
 
 export default function Profile() {
   const fileRef = useRef(null);
@@ -29,6 +29,8 @@ export default function Profile() {
   const [fileUploadError, setFileUploadError] = useState(false);
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [showListsError, setShowListsError] = useState(false);
+  const [userLists, setUserLists] = useState([]);
 
   const dispatch = useDispatch();
   // console.log(formData);
@@ -119,6 +121,21 @@ export default function Profile() {
       dispatch(signOutUserFailure(error.message));
     }
   };
+
+  const handleShowLists = async () => {
+    try {
+      setShowListsError(false);
+      const respose = await fetch(`/api/user/lists/${currentUser._id}`);
+      const data = await respose.json();
+      if (data.success === false) {
+        setShowListsError(true);
+        return;
+      }
+      setUserLists(data);
+    } catch (error) {
+      setShowListsError(true);
+    }
+  };
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
@@ -178,7 +195,10 @@ export default function Profile() {
         >
           {loading ? "Loading..." : "Update"}
         </button>
-        <Link className="bg-green-700 p-3 text-center rounded-lg uppercase text-white hover:opacity-90" to={'/create-listing'}>
+        <Link
+          className="bg-green-700 p-3 text-center rounded-lg uppercase text-white hover:opacity-90"
+          to={"/create-listing"}
+        >
           Create a list
         </Link>
       </form>
@@ -197,6 +217,43 @@ export default function Profile() {
       <p className="text-green-700 mt-5">
         {updateSuccess ? "User is updated successfully!" : ""}
       </p>
+      <button onClick={handleShowLists} className="text-green-700 w-full">
+        Show your Lists
+      </button>
+      <p className="text-red-700 mt-5">
+        {showListsError ? "Error Showing Lists!" : ""}
+      </p>
+      {userLists && userLists.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <h1 className="text-center mt-7 text-2xl font-semibold">
+            Your Lists
+          </h1>
+          {userLists.map((listing) => (
+            <div
+              key={listing._id}
+              className="border rounded-lg p-3 flex justify-between items-center gap-4 hover:shadow-xl"
+            >
+              <Link to={`/listing/${listing._id}`}>
+                <img
+                  src={listing.imageUrls[0]}
+                  alt="Listing Cover"
+                  className="h-16 w-16 object-contain  transition  ease-in-out hover:-translate-y-1 hover:scale-110 duration-300"
+                />
+              </Link>
+              <Link
+                className="text-slate-700 font-semibold flex-1 hover:underline truncate"
+                to={`/listing/${listing._id}`}
+              >
+                <p>{listing.name}</p>
+              </Link>
+              <div className="flex flex-col items-center">
+                <button className="text-red-700 uppercase">Delete</button>
+                <button className="text-green-700 uppercase">Edit</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
