@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ListingItem from "../components/ListingItem";
 export default function Search() {
   const navigate = useNavigate();
   const [sidebardata, setSidebardata] = useState({
@@ -47,9 +48,15 @@ export default function Search() {
 
     const fetchListings = async () => {
       setLoading(true);
+      // setShowMore(false);
       const searchQuery = urlParams.toString();
-      const response = await fetch(`/api/listing/get?${searchQuery}`);
-      const data = await response.json();
+      const res = await fetch(`/api/listing/get?${searchQuery}`);
+      const data = await res.json();
+      // if (data.length > 8) {
+      //   setShowMore(true);
+      // } else {
+      //   setShowMore(false);
+      // }
       setListings(data);
       setLoading(false);
     };
@@ -65,13 +72,15 @@ export default function Search() {
     ) {
       setSidebardata({ ...sidebardata, type: e.target.id });
     }
+
     if (e.target.id === "searchTerm") {
       setSidebardata({ ...sidebardata, searchTerm: e.target.value });
     }
+
     if (
-      (e.target.id === "parking",
-      e.target.id === "furnished",
-      e.target.id === "offer")
+      e.target.id === "parking" ||
+      e.target.id === "furnished" ||
+      e.target.id === "offer"
     ) {
       setSidebardata({
         ...sidebardata,
@@ -79,9 +88,12 @@ export default function Search() {
           e.target.checked || e.target.checked === "true" ? true : false,
       });
     }
+
     if (e.target.id === "sort_order") {
-      const sort = e.target.value.split("_")[0] || "created-at";
+      const sort = e.target.value.split("_")[0] || "created_at";
+
       const order = e.target.value.split("_")[1] || "desc";
+
       setSidebardata({ ...sidebardata, sort, order });
     }
   };
@@ -201,10 +213,44 @@ export default function Search() {
           </button>
         </form>
       </div>
-      <div className="">
+      <div className="flex-1">
         <h1 className="text-3xl font-semibold border-b p-3 text-slate-700 mt-5 ">
           Listing result :
         </h1>
+        <div className="p-7 flex flex-wrap gap-4">
+          {!loading && listings.length === 0 && (
+            <p className="text-xl text-slate-700">No Listing Found!</p>
+          )}
+          {loading && (
+            <p className="text-center w-full">
+              <button
+                type="button"
+                className=" px-4 py-2   cursor-not-allowed"
+                disabled
+              >
+                <svg
+                  className="h-32 w-32 mr-3 text-black animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M5 12a2 2 0 100-4 2 2 0 000 4zM12 20a2 2 0 100-4 2 2 0 000 4zM12 4a2 2 0 100-4 2 2 0 000 4zM19 12a2 2 0 100-4 2 2 0 000 4z"
+                    fill="currentColor"
+                  />
+                </svg>
+                Loading...
+              </button>
+            </p>
+          )}
+          {!loading &&
+            listings &&
+            listings.map((listing) => (
+              <ListingItem key={listing._id} listing={listing} />
+            ))}
+        </div>
       </div>
     </div>
   );
